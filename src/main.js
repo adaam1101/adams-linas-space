@@ -625,6 +625,9 @@ function initScreenShareUI() {
   const shareBtn = document.getElementById('btn-toggle-share');
   const shareStatus = document.getElementById('share-status-text');
   const screensharePlayer = document.getElementById('screenshare-player');
+  const fullscreenBtn = document.getElementById('btn-player-fullscreen');
+  const rotateBtn = document.getElementById('btn-player-rotate');
+  const playerContainer = document.getElementById('player-container');
 
   shareBtn.addEventListener('click', async () => {
     if (isSharingScreen) {
@@ -689,6 +692,62 @@ function initScreenShareUI() {
       resetToDefaultPlayerView();
     }
   );
+
+  // Overlay Controls Handlers
+  fullscreenBtn.addEventListener('click', togglePlayerFullscreen);
+  rotateBtn.addEventListener('click', togglePlayerRotation);
+
+  const syncFullscreenState = () => {
+    const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    playerContainer.classList.toggle('is-fullscreen', isFs);
+    fullscreenBtn.innerHTML = isFs ? 'Exit 🚪' : '⛶ Fullscreen';
+    if (!isFs) {
+      screensharePlayer.classList.remove('rotated-90');
+      rotateBtn.innerHTML = '🔄 Flip';
+    }
+  };
+
+  document.addEventListener('fullscreenchange', syncFullscreenState);
+  document.addEventListener('webkitfullscreenchange', syncFullscreenState);
+}
+
+function togglePlayerFullscreen() {
+  const playerContainer = document.getElementById('player-container');
+  const screensharePlayer = document.getElementById('screenshare-player');
+
+  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    if (playerContainer.requestFullscreen) {
+      playerContainer.requestFullscreen();
+    } else if (playerContainer.webkitRequestFullscreen) {
+      playerContainer.webkitRequestFullscreen();
+    } else if (screensharePlayer.webkitEnterFullscreen) {
+      screensharePlayer.webkitEnterFullscreen();
+    }
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    }
+  }
+}
+
+function togglePlayerRotation() {
+  const playerContainer = document.getElementById('player-container');
+  const screensharePlayer = document.getElementById('screenshare-player');
+  const rotateBtn = document.getElementById('btn-player-rotate');
+
+  // Go fullscreen automatically when flipping for maximum size
+  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    if (playerContainer.requestFullscreen) {
+      playerContainer.requestFullscreen();
+    } else if (playerContainer.webkitRequestFullscreen) {
+      playerContainer.webkitRequestFullscreen();
+    }
+  }
+
+  const isRotated = screensharePlayer.classList.toggle('rotated-90');
+  rotateBtn.innerHTML = isRotated ? '🔄 Normal' : '🔄 Flip';
 }
 
 function activateScreenshareView(isLocalShare, partnerName) {
@@ -710,6 +769,7 @@ function activateScreenshareView(isLocalShare, partnerName) {
   document.getElementById('upload-input-bar').classList.add('hidden');
   document.getElementById('netflix-panel').classList.add('hidden');
   document.getElementById('screenshare-panel').classList.remove('hidden');
+  document.getElementById('player-overlay-controls').classList.remove('hidden');
 
   const nowWatching = document.getElementById('now-watching');
   nowWatching.classList.remove('hidden');
@@ -734,6 +794,7 @@ function resetToDefaultPlayerView() {
   document.getElementById('upload-input-bar').classList.toggle('hidden', source !== 'upload');
   document.getElementById('netflix-panel').classList.toggle('hidden', source !== 'netflix');
   document.getElementById('screenshare-panel').classList.toggle('hidden', source !== 'screenshare');
+  document.getElementById('player-overlay-controls').classList.add('hidden');
 
   const nowWatching = document.getElementById('now-watching');
   nowWatching.classList.add('hidden');

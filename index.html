@@ -131,6 +131,11 @@
           <div id="youtube-player" class="hidden"></div>
           <video id="local-player" class="hidden" controls></video>
           <video id="screenshare-player" class="hidden" autoplay playsinline></video>
+          <!-- Player Controls Overlay (mainly for screenshare) -->
+          <div class="player-overlay-controls hidden" id="player-overlay-controls">
+            <button type="button" class="overlay-btn" id="btn-player-rotate" title="Rotate Video">🔄 Flip</button>
+            <button type="button" class="overlay-btn" id="btn-player-fullscreen" title="Toggle Fullscreen">⛶ Fullscreen</button>
+          </div>
         </div>
 
         <div class="now-watching glass-card hidden" id="now-watching">
