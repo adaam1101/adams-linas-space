@@ -1228,17 +1228,32 @@ body.user-lina .chat-input-bar input:focus {
 @media (max-width: 900px) {
   .room-body {
     flex-direction: column;
+    height: calc(100vh - 60px);
+    overflow: hidden;
+  }
+
+  .video-section {
+    flex: none;
+    height: 40vh;
+    min-height: auto;
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .player-container {
+    min-height: 0 !important;
   }
 
   .chat-section {
     width: 100%;
     border-left: none;
     border-top: 1px solid var(--border-glass);
-    height: 45vh;
-  }
-
-  .video-section {
-    min-height: 40vh;
+    flex: 1;
+    height: auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   .profile-cards {
@@ -1266,23 +1281,75 @@ body.user-lina .chat-input-bar input:focus {
 
   .video-source-bar {
     flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px;
+  }
+
+  .source-btn {
+    padding: 8px 10px;
+    font-size: 0.8rem;
   }
 
   .url-input-bar {
     flex-direction: column;
+    gap: 6px;
   }
 
   .btn-load {
     width: 100%;
+    padding: 10px;
   }
 
   .emoji-picker {
     left: 6px;
     right: 6px;
+    bottom: 60px;
   }
 
   .emoji-grid {
     grid-template-columns: repeat(6, 1fr);
+  }
+
+  .message {
+    max-width: 90%;
+  }
+
+  .room-header {
+    padding: 8px 12px;
+  }
+
+  .room-title {
+    font-size: 1rem;
+  }
+
+  .video-section {
+    padding: 6px;
+    gap: 6px;
+  }
+
+  /* Prevent reaction picker overflow on mobile */
+  .message.mine .reaction-picker-popover {
+    right: 0;
+    left: auto;
+    transform: none;
+    animation: popoverInMine 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .message.theirs .reaction-picker-popover {
+    left: 0;
+    right: auto;
+    transform: none;
+    animation: popoverInTheirs 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  @keyframes popoverInMine {
+    from { opacity: 0; transform: translateY(10px) scale(0.8); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  @keyframes popoverInTheirs {
+    from { opacity: 0; transform: translateY(10px) scale(0.8); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
 }
 
