@@ -6,12 +6,13 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: "__FIREBASE_API_KEY__",
-  authDomain: "__FIREBASE_AUTH_DOMAIN__",
-  projectId: "__FIREBASE_PROJECT_ID__",
-  storageBucket: "__FIREBASE_STORAGE_BUCKET__",
-  messagingSenderId: "__FIREBASE_MESSAGING_SENDER_ID__",
-  appId: "__FIREBASE_APP_ID__"
+  apiKey: "AIzaSyCzDoJjNFT-eaQfu9xC1d3wXWp3k9mKOT0",
+  authDomain: "adam-lina.firebaseapp.com",
+  projectId: "adam-lina",
+  storageBucket: "adam-lina.firebasestorage.app",
+  messagingSenderId: "817319777262",
+  appId: "1:817319777262:web:cfd699a2105c0e8ba7b4ff",
+  measurementId: "G-3PY59TWJ5E"
 };
 
 const app = initializeApp(firebaseConfig);
