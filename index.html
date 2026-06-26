@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Adam & Lina's Space — A cozy private place to watch movies together and chat in real time." />
+  <title>Adam & Lina's Space 🌙</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌙</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="particles-bg"></div>
+
+  <!-- LOGIN SCREEN -->
+  <section id="login-screen" class="screen active">
+    <div class="login-container">
+      <div class="login-header">
+        <h1 class="logo-text">
+          <span class="logo-adam">adam</span>
+          <span class="logo-slash">/</span>
+          <span class="logo-lina">lina</span>
+          <span class="logo-suffix">'s space</span>
+        </h1>
+        <p class="login-subtitle">your cozy movie corner 🍿</p>
+      </div>
+      <div class="profile-cards">
+        <button class="profile-card" id="login-adam" data-user="adam">
+          <div class="avatar adam-avatar">🧑‍💻</div>
+          <span class="profile-name">Adam</span>
+          <span class="profile-hint">click to enter</span>
+        </button>
+        <div class="heart-divider">💕</div>
+        <button class="profile-card" id="login-lina" data-user="lina">
+          <div class="avatar lina-avatar">👩‍🎨</div>
+          <span class="profile-name">Lina</span>
+          <span class="profile-hint">click to enter</span>
+        </button>
+      </div>
+      <!-- Password Modal -->
+      <div class="password-modal" id="password-modal">
+        <div class="password-card glass-card">
+          <button class="modal-close" id="modal-close">✕</button>
+          <div class="modal-avatar" id="modal-avatar"></div>
+          <h2 id="modal-title">Welcome back!</h2>
+          <form id="password-form">
+            <div class="input-group">
+              <input type="password" id="password-input" placeholder="enter your password ✨" autocomplete="current-password" required />
+            </div>
+            <button type="submit" class="btn-enter" id="btn-enter">Enter Space 🚀</button>
+            <p class="error-msg" id="login-error"></p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN ROOM -->
+  <section id="room-screen" class="screen">
+    <header class="room-header">
+      <div class="header-left">
+        <h1 class="room-title">🌙 adam/lina's space</h1>
+      </div>
+      <div class="header-right">
+        <div class="online-status" id="partner-status">
+          <span class="status-dot offline"></span>
+          <span class="status-name" id="partner-name">—</span>
+        </div>
+        <button class="btn-icon" id="btn-logout" title="Leave space">🚪</button>
+      </div>
+    </header>
+
+    <main class="room-body">
+      <!-- VIDEO SECTION -->
+      <div class="video-section">
+        <div class="video-source-bar glass-card">
+          <button class="source-btn active" data-source="youtube" id="src-youtube">▶️ YouTube</button>
+          <button class="source-btn" data-source="upload" id="src-upload">📁 Upload</button>
+          <button class="source-btn" data-source="netflix" id="src-netflix">🎬 Netflix Sync</button>
+        </div>
+
+        <!-- YouTube Input -->
+        <div class="url-input-bar" id="youtube-input-bar">
+          <input type="text" id="youtube-url" placeholder="paste a YouTube link here..." class="url-input" />
+          <button class="btn-load" id="btn-load-yt">Watch 🍿</button>
+        </div>
+
+        <!-- Upload Input -->
+        <div class="url-input-bar hidden" id="upload-input-bar">
+          <label class="upload-label" for="file-upload">
+            <span>📂 Choose a video file</span>
+            <input type="file" id="file-upload" accept="video/*" />
+          </label>
+          <span class="file-name" id="file-name">No file chosen</span>
+        </div>
+
+        <!-- Netflix Sync Panel -->
+        <div class="netflix-panel hidden" id="netflix-panel">
+          <div class="netflix-info glass-card">
+            <p>🎬 Open Netflix in another tab, pick your show, then sync your play!</p>
+            <input type="text" id="netflix-title" placeholder="What are you watching? e.g. 'Our Planet S1E3'" class="url-input" />
+            <div class="countdown-section">
+              <button class="btn-countdown" id="btn-countdown">Start 3-2-1 Countdown 🎬</button>
+              <div class="countdown-display hidden" id="countdown-display">
+                <span class="countdown-number" id="countdown-number">3</span>
+              </div>
+              <p class="countdown-msg" id="countdown-msg"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Video Player Container -->
+        <div class="player-container" id="player-container">
+          <div class="player-placeholder" id="player-placeholder">
+            <span class="placeholder-icon">🎬</span>
+            <p>Paste a YouTube link or upload a video to start watching together!</p>
+          </div>
+          <div id="youtube-player" class="hidden"></div>
+          <video id="local-player" class="hidden" controls></video>
+        </div>
+
+        <div class="now-watching glass-card hidden" id="now-watching">
+          <span class="now-watching-icon">👀</span>
+          <span class="now-watching-text" id="now-watching-text">Now watching together...</span>
+        </div>
+      </div>
+
+      <!-- CHAT SECTION -->
+      <div class="chat-section">
+        <div class="chat-header glass-card">
+          <span>💬 Chat</span>
+          <span class="msg-count" id="msg-count">0</span>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-welcome">
+            <span>🌙</span>
+            <p>Welcome to your space! Say something cute 💕</p>
+          </div>
+        </div>
+        <div class="typing-indicator hidden" id="typing-indicator">
+          <span class="typing-name" id="typing-name"></span>
+          <span class="typing-dots">
+            <span>.</span><span>.</span><span>.</span>
+          </span>
+        </div>
+        <form class="chat-input-bar" id="chat-form">
+          <button type="button" class="btn-emoji" id="btn-emoji">😊</button>
+          <input type="text" id="chat-input" placeholder="type a message..." autocomplete="off" maxlength="500" />
+          <button type="submit" class="btn-send" id="btn-send">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          </button>
+        </form>
+        <!-- Emoji Picker -->
+        <div class="emoji-picker hidden" id="emoji-picker">
+          <div class="emoji-grid" id="emoji-grid"></div>
+        </div>
+      </div>
+    </main>
+  </section>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
