@@ -162,10 +162,27 @@
             <span>.</span><span>.</span><span>.</span>
           </span>
         </div>
+        <!-- Reply Preview Bar -->
+        <div class="chat-reply-preview hidden" id="chat-reply-preview">
+          <div class="reply-preview-content">
+            <span class="reply-preview-label">Replying to <span id="reply-preview-name">—</span></span>
+            <span class="reply-preview-text" id="reply-preview-text">—</span>
+          </div>
+          <button type="button" class="btn-close-reply" id="btn-close-reply" title="Cancel reply">✕</button>
+        </div>
+
         <form class="chat-input-bar" id="chat-form">
           <button type="button" class="btn-emoji" id="btn-emoji">😊</button>
           <input type="text" id="chat-input" placeholder="type a message..." autocomplete="off" maxlength="500" />
-          <button type="submit" class="btn-send" id="btn-send">
+          
+          <div class="voice-record-container hidden" id="voice-record-container">
+            <span class="recording-dot">🔴</span>
+            <span class="recording-timer" id="recording-timer">0:00</span>
+            <button type="button" class="btn-voice-cancel" id="btn-voice-cancel" title="Cancel recording">🗑️</button>
+          </div>
+
+          <button type="button" class="btn-voice" id="btn-voice" title="Record Voice Message">🎤</button>
+          <button type="submit" class="btn-send hidden" id="btn-send" title="Send Message">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
           </button>
         </form>

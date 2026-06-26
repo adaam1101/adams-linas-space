@@ -1297,6 +1297,285 @@ body.user-lina .chat-input-bar input:focus {
   background: var(--bg-glass-hover);
 }
 
+/* Quoted Reply inside Message Bubble */
+.message-reply-preview {
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid var(--adam-color);
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 100%;
+}
+
+.message.theirs .message-reply-preview {
+  border-left-color: var(--lina-color);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.message-reply-preview .reply-sender {
+  font-weight: 800;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+}
+
+.message-reply-preview .reply-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Reply Trigger Button */
+.btn-reply-msg {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s, background 0.2s;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.message:hover .btn-reply-msg {
+  opacity: 1;
+}
+
+.btn-reply-msg:hover {
+  transform: scale(1.15);
+  background: var(--bg-glass-hover);
+  color: var(--text-primary);
+}
+
+/* Chat Reply Preview Panel (above Input Bar) */
+.chat-reply-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-glass);
+  border-left: 4px solid var(--adam-color);
+  animation: slideUp 0.2s ease;
+  flex-shrink: 0;
+}
+
+body.user-lina .chat-reply-preview {
+  border-left-color: var(--lina-color);
+}
+
+.reply-preview-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+  margin-right: 12px;
+}
+
+.reply-preview-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--adam-color);
+}
+
+body.user-lina .reply-preview-label {
+  color: var(--lina-color);
+}
+
+.reply-preview-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-close-reply {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px;
+  transition: var(--transition);
+}
+
+.btn-close-reply:hover {
+  color: var(--text-primary);
+  transform: scale(1.1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Voice Record Container in Input Bar */
+.voice-record-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  padding: 10px 16px;
+  background: var(--bg-deep);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-full);
+}
+
+.recording-dot {
+  font-size: 0.7rem;
+  animation: pulse-red 1.2s ease infinite;
+}
+
+@keyframes pulse-red {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.recording-timer {
+  font-family: monospace;
+  font-size: 1rem;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.btn-voice-cancel {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  transition: var(--transition);
+}
+
+.btn-voice-cancel:hover {
+  transform: scale(1.2);
+}
+
+/* Mic/Voice Record Action Button */
+.btn-voice {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.btn-voice:hover {
+  transform: scale(1.1);
+  background: var(--bg-glass-hover);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-voice.recording-active {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+}
+
+/* Custom Voice Message Player inside Bubble */
+.voice-message-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 180px;
+  padding: 4px 0;
+}
+
+.voice-play-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+  color: white;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.message.theirs .voice-play-btn {
+  background: rgba(0, 0, 0, 0.15);
+  color: var(--text-primary);
+}
+
+.voice-play-btn:hover {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.voice-progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.voice-progress-bar {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 2px;
+  height: 4px;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.message.theirs .voice-progress-bar {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.voice-progress-fill {
+  background: white;
+  height: 100%;
+  width: 0%;
+  transition: width 0.1s linear;
+}
+
+.message.theirs .voice-progress-fill {
+  background: var(--lina-color);
+}
+
+body.user-lina .message.theirs .voice-progress-fill {
+  background: var(--adam-color);
+}
+
+body.user-lina .message.mine .voice-progress-fill {
+  background: white;
+}
+
+.voice-duration {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: monospace;
+}
+
+.message.theirs .voice-duration {
+  color: var(--text-muted);
+}
+
 /* ---------- Utilities ---------- */
 .hidden {
   display: none !important;

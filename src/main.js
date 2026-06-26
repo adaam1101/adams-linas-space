@@ -1,7 +1,7 @@
 // Main application — Adam & Lina's Space
 import './style.css';
 import { login, logout, getCurrentUser, watchPartnerPresence, getPartnerName } from './auth.js';
-import { initChat, sendMessage, setTyping, destroyChat, formatTime, toggleReaction } from './chat.js';
+import { initChat, sendMessage, setTyping, destroyChat, formatTime, toggleReaction, sendVoiceMessage } from './chat.js';
 import {
   loadYouTubeAPI,
   extractYouTubeId,
@@ -107,6 +107,9 @@ function initLogin() {
 
 // ─── Room Logic ───
 let chatMessages = [];
+let activeReplyTo = null;
+let activeAudio = null;
+let activeAudioId = null;
 
 function enterRoom() {
   const user = getCurrentUser();
@@ -168,13 +171,51 @@ function initChatUI() {
   const emojiBtn = document.getElementById('btn-emoji');
   const emojiPicker = document.getElementById('emoji-picker');
   const emojiGrid = document.getElementById('emoji-grid');
+  
+  const replyPreviewBar = document.getElementById('chat-reply-preview');
+  const replyNameEl = document.getElementById('reply-preview-name');
+  const replyTextEl = document.getElementById('reply-preview-text');
+  const closeReplyBtn = document.getElementById('btn-close-reply');
+  
+  const voiceBtn = document.getElementById('btn-voice');
+  const voiceRecordContainer = document.getElementById('voice-record-container');
+  const recordTimerEl = document.getElementById('recording-timer');
+  const voiceCancelBtn = document.getElementById('btn-voice-cancel');
+  const sendBtn = document.getElementById('btn-send');
+  
   const user = getCurrentUser();
+
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let recordTimerInterval = null;
+  let recordStartTime = 0;
+  let isRecordCancelled = false;
+
+  // Toggle send/mic buttons based on input text
+  chatInput.addEventListener('input', () => {
+    const text = chatInput.value.trim();
+    if (text.length > 0) {
+      sendBtn.classList.remove('hidden');
+      voiceBtn.classList.add('hidden');
+    } else {
+      sendBtn.classList.add('hidden');
+      voiceBtn.classList.remove('hidden');
+    }
+  });
+
+  // Cancel reply handler
+  closeReplyBtn.addEventListener('click', () => {
+    activeReplyTo = null;
+    replyPreviewBar.classList.add('hidden');
+  });
 
   // Emoji picker
   createEmojiPicker(emojiGrid, (emoji) => {
     chatInput.value += emoji;
     chatInput.focus();
     emojiPicker.classList.add('hidden');
+    sendBtn.classList.remove('hidden');
+    voiceBtn.classList.add('hidden');
   });
 
   emojiBtn.addEventListener('click', (e) => {
@@ -206,8 +247,113 @@ function initChatUI() {
     const text = chatInput.value.trim();
     if (!text) return;
     chatInput.value = '';
-    await sendMessage(text);
+    sendBtn.classList.add('hidden');
+    voiceBtn.classList.remove('hidden');
+
+    const replyPayload = activeReplyTo;
+    activeReplyTo = null;
+    replyPreviewBar.classList.add('hidden');
+
+    await sendMessage(text, replyPayload);
   });
+
+  // Voice recording toggle click
+  voiceBtn.addEventListener('click', async () => {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      isRecordCancelled = false;
+      mediaRecorder.stop();
+    } else {
+      await startVoiceRecording();
+    }
+  });
+
+  voiceCancelBtn.addEventListener('click', () => {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      isRecordCancelled = true;
+      mediaRecorder.stop();
+    }
+  });
+
+  async function startVoiceRecording() {
+    audioChunks = [];
+    isRecordCancelled = false;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      let options = { mimeType: 'audio/webm' };
+      if (!MediaRecorder.isTypeSupported('audio/webm')) {
+        options = { mimeType: 'audio/ogg' };
+        if (!MediaRecorder.isTypeSupported('audio/ogg')) {
+          options = {};
+        }
+      }
+      
+      mediaRecorder = new MediaRecorder(stream, options);
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunks.push(event.data);
+        }
+      };
+      
+      mediaRecorder.onstop = async () => {
+        stopRecordTimer();
+        if (!isRecordCancelled) {
+          const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+          recordTimerEl.textContent = 'Sending... ⏳';
+          try {
+            const replyPayload = activeReplyTo;
+            activeReplyTo = null;
+            replyPreviewBar.classList.add('hidden');
+            await sendVoiceMessage(audioBlob, replyPayload);
+          } catch (err) {
+            console.error('Failed to send voice message:', err);
+            alert('Failed to send voice message 😢');
+          }
+        }
+        stream.getTracks().forEach(track => track.stop());
+        resetRecordUI();
+      };
+      
+      mediaRecorder.start();
+      recordStartTime = Date.now();
+      startRecordTimer();
+      
+      emojiBtn.classList.add('hidden');
+      chatInput.classList.add('hidden');
+      voiceRecordContainer.classList.remove('hidden');
+      voiceBtn.textContent = '✔️';
+      voiceBtn.title = 'Send voice message';
+      voiceBtn.classList.add('recording-active');
+    } catch (err) {
+      console.error('Microphone access failed:', err);
+      alert('Could not access microphone. Please check browser permissions! 🎤');
+    }
+  }
+
+  function startRecordTimer() {
+    clearInterval(recordTimerInterval);
+    recordTimerEl.textContent = '0:00';
+    recordTimerInterval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - recordStartTime) / 1000);
+      const minutes = Math.floor(elapsed / 60);
+      const seconds = elapsed % 60;
+      recordTimerEl.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    }, 1000);
+  }
+
+  function stopRecordTimer() {
+    clearInterval(recordTimerInterval);
+  }
+
+  function resetRecordUI() {
+    emojiBtn.classList.remove('hidden');
+    chatInput.classList.remove('hidden');
+    voiceRecordContainer.classList.add('hidden');
+    voiceBtn.textContent = '🎤';
+    voiceBtn.title = 'Record Voice Message';
+    voiceBtn.classList.remove('recording-active');
+    mediaRecorder = null;
+  }
 
   // Listen for messages
   initChat(
@@ -274,12 +420,47 @@ function renderMessages(container, messages, user) {
       reactionsHtml += `</div>`;
     }
 
+    // Quoted reply rendering
+    let replyHtml = '';
+    if (msg.replyTo) {
+      replyHtml = `
+        <div class="message-reply-preview">
+          <span class="reply-sender">${msg.replyTo.senderName}</span>
+          <span class="reply-text">${escapeHtml(msg.replyTo.text || '🎙️ Voice Message')}</span>
+        </div>
+      `;
+    }
+
+    // Message body text/audio
+    let messageBody = '';
+    if (msg.type === 'audio' || msg.audioUrl) {
+      const isPlaying = (activeAudioId === msg.id && activeAudio && !activeAudio.paused);
+      const btnLabel = isPlaying ? '⏸️' : '▶️';
+      messageBody = `
+        <div class="voice-message-player" id="voice-player-${msg.id}">
+          <button type="button" class="voice-play-btn" data-url="${msg.audioUrl}" data-id="${msg.id}">${btnLabel}</button>
+          <div class="voice-progress-container">
+            <div class="voice-progress-bar">
+              <div class="voice-progress-fill" id="progress-fill-${msg.id}" style="width: 0%"></div>
+            </div>
+            <span class="voice-duration" id="voice-duration-${msg.id}">0:00</span>
+          </div>
+        </div>
+      `;
+    } else {
+      messageBody = escapeHtml(msg.text);
+    }
+
     div.innerHTML = `
       <div class="message-content-container">
         <div class="message-bubble">
-          ${escapeHtml(msg.text)}
+          ${replyHtml}
+          <div class="message-bubble-body">
+            ${messageBody}
+          </div>
           ${reactionsHtml}
         </div>
+        <button type="button" class="btn-reply-msg" title="Reply to message">↩️</button>
         <button type="button" class="react-trigger-btn" title="Add reaction">➕</button>
         <div class="reaction-picker-popover hidden">
           <button type="button" class="picker-emoji-btn" data-emoji="❤️">❤️</button>
@@ -337,6 +518,37 @@ function renderMessages(container, messages, user) {
         } catch (err) {
           console.error('Error toggling reaction badge:', err);
         }
+      });
+    });
+
+    // Reply click handler
+    div.querySelector('.btn-reply-msg').addEventListener('click', (e) => {
+      e.stopPropagation();
+      activeReplyTo = {
+        id: msg.id,
+        text: msg.type === 'audio' ? '🎙️ Voice Message' : msg.text,
+        senderName: msg.senderName
+      };
+
+      const replyPreviewBar = document.getElementById('chat-reply-preview');
+      const replyNameEl = document.getElementById('reply-preview-name');
+      const replyTextEl = document.getElementById('reply-preview-text');
+
+      replyNameEl.textContent = msg.senderName;
+      replyTextEl.textContent = msg.type === 'audio' ? '🎙️ Voice Message' : msg.text;
+      replyPreviewBar.classList.remove('hidden');
+
+      const chatInput = document.getElementById('chat-input');
+      chatInput.focus();
+    });
+
+    // Play Voice message click handler
+    div.querySelectorAll('.voice-play-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const url = btn.dataset.url;
+        const id = btn.dataset.id;
+        handleVoicePlayback(id, url, btn);
       });
     });
 
@@ -798,6 +1010,66 @@ function resetToDefaultPlayerView() {
 
   const nowWatching = document.getElementById('now-watching');
   nowWatching.classList.add('hidden');
+}
+
+// ─── Voice Playback Helper ───
+function handleVoicePlayback(id, url, btn) {
+  if (activeAudioId === id && activeAudio) {
+    if (activeAudio.paused) {
+      activeAudio.play();
+      btn.textContent = '⏸️';
+    } else {
+      activeAudio.pause();
+      btn.textContent = '▶️';
+    }
+    return;
+  }
+
+  if (activeAudio) {
+    activeAudio.pause();
+    const oldBtn = document.querySelector(`.voice-play-btn[data-id="${activeAudioId}"]`);
+    if (oldBtn) oldBtn.textContent = '▶️';
+  }
+
+  activeAudio = new Audio(url);
+  activeAudioId = id;
+  btn.textContent = '⏸️';
+
+  activeAudio.play();
+
+  activeAudio.ontimeupdate = () => {
+    const progressFill = document.getElementById(`progress-fill-${id}`);
+    const durationEl = document.getElementById(`voice-duration-${id}`);
+    if (progressFill && durationEl) {
+      const percent = (activeAudio.currentTime / activeAudio.duration) * 100 || 0;
+      progressFill.style.width = `${percent}%`;
+      durationEl.textContent = `${formatAudioTime(activeAudio.currentTime)} / ${formatAudioTime(activeAudio.duration || 0)}`;
+    }
+  };
+
+  activeAudio.onloadedmetadata = () => {
+    const durationEl = document.getElementById(`voice-duration-${id}`);
+    if (durationEl) {
+      durationEl.textContent = `0:00 / ${formatAudioTime(activeAudio.duration)}`;
+    }
+  };
+
+  activeAudio.onended = () => {
+    btn.textContent = '▶️';
+    const progressFill = document.getElementById(`progress-fill-${id}`);
+    const durationEl = document.getElementById(`voice-duration-${id}`);
+    if (progressFill) progressFill.style.width = '0%';
+    if (durationEl) durationEl.textContent = '0:00';
+    activeAudio = null;
+    activeAudioId = null;
+  };
+}
+
+function formatAudioTime(seconds) {
+  if (isNaN(seconds)) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 }
 
 // ─── Initialize App ───

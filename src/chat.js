@@ -1,5 +1,6 @@
 // Real-time chat module for Adam & Lina's Space
-import { db } from './firebase.js';
+import { db, storage } from './firebase.js';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
   collection,
   addDoc,
@@ -46,19 +47,50 @@ export function initChat(onMessage, onTyping) {
   }
 }
 
-export async function sendMessage(text) {
+export async function sendMessage(text, replyTo = null) {
   const user = getCurrentUser();
   if (!user || !text.trim()) return;
 
-  await addDoc(collection(db, 'messages'), {
+  const msgData = {
     text: text.trim(),
     sender: user.key,
     senderName: user.name,
     createdAt: serverTimestamp()
-  });
+  };
+
+  if (replyTo) {
+    msgData.replyTo = replyTo;
+  }
+
+  await addDoc(collection(db, 'messages'), msgData);
 
   // Clear typing indicator
   await setTyping(false);
+}
+
+export async function sendVoiceMessage(audioBlob, replyTo = null) {
+  const user = getCurrentUser();
+  if (!user || !audioBlob) return;
+
+  const fileName = `voice/${user.key}_${Date.now()}.webm`;
+  const storageRef = ref(storage, fileName);
+
+  const snapshot = await uploadBytes(storageRef, audioBlob);
+  const downloadURL = await getDownloadURL(snapshot.ref);
+
+  const msgData = {
+    audioUrl: downloadURL,
+    sender: user.key,
+    senderName: user.name,
+    createdAt: serverTimestamp(),
+    type: 'audio'
+  };
+
+  if (replyTo) {
+    msgData.replyTo = replyTo;
+  }
+
+  await addDoc(collection(db, 'messages'), msgData);
 }
 
 export async function toggleReaction(messageId, currentReactions = {}, emoji) {
