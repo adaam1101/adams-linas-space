@@ -78,6 +78,7 @@
           <button class="source-btn active" data-source="youtube" id="src-youtube">▶️ YouTube</button>
           <button class="source-btn" data-source="upload" id="src-upload">📁 Upload</button>
           <button class="source-btn" data-source="netflix" id="src-netflix">🎬 Netflix Sync</button>
+          <button class="source-btn" data-source="screenshare" id="src-screenshare">🖥️ Screen Share</button>
         </div>
 
         <!-- YouTube Input -->
@@ -110,6 +111,17 @@
           </div>
         </div>
 
+        <!-- Screen Share Panel -->
+        <div class="screenshare-panel hidden" id="screenshare-panel">
+          <div class="screenshare-info glass-card">
+            <p>🖥️ Share your screen, a window, or a tab with your partner in real time!</p>
+            <div class="screenshare-action-section">
+              <button class="btn-share" id="btn-toggle-share">Start Screen Share 🖥️</button>
+              <p class="share-status-text" id="share-status-text">Ready to share</p>
+            </div>
+          </div>
+        </div>
+
         <!-- Video Player Container -->
         <div class="player-container" id="player-container">
           <div class="player-placeholder" id="player-placeholder">
@@ -118,6 +130,7 @@
           </div>
           <div id="youtube-player" class="hidden"></div>
           <video id="local-player" class="hidden" controls></video>
+          <video id="screenshare-player" class="hidden" autoplay playsinline></video>
         </div>
 
         <div class="now-watching glass-card hidden" id="now-watching">

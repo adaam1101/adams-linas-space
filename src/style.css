@@ -656,6 +656,69 @@ body {
   min-height: 1.5rem;
 }
 
+/* Screen Share Panel */
+.screenshare-panel {
+  margin-bottom: 12px;
+}
+
+.screenshare-info {
+  padding: 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.screenshare-action-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-share {
+  padding: 12px 28px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--adam-color), var(--lina-color));
+  color: white;
+  font-family: var(--font);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-share:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--adam-glow);
+}
+
+body.user-lina .btn-share:hover {
+  box-shadow: 0 6px 20px var(--lina-glow);
+}
+
+.btn-share.sharing {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  animation: pulse-ring-share 1.5s ease infinite;
+}
+
+.btn-share.sharing:hover {
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+@keyframes pulse-ring-share {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+}
+
+.share-status-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
 /* Player Container */
 .player-container {
   flex: 1;
@@ -700,7 +763,7 @@ body {
   border: none;
 }
 
-#local-player {
+#local-player, #screenshare-player {
   width: 100%;
   height: 100%;
   object-fit: contain;

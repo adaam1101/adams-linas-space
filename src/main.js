@@ -17,6 +17,7 @@ import {
   destroyPlayer
 } from './player.js';
 import { createEmojiPicker } from './emoji.js';
+import { startScreenSharing, listenForIncomingShare, stopScreenSharing } from './screenShare.js';
 
 // ─── Particles Background ───
 function createParticles() {
@@ -132,6 +133,9 @@ function enterRoom() {
   // Initialize video player sources
   initVideoSources();
 
+  // Initialize screen sharing
+  initScreenShareUI();
+
   // Load YouTube API
   loadYouTubeAPI().then(() => {
     console.log('YouTube API ready');
@@ -141,6 +145,12 @@ function enterRoom() {
   document.getElementById('btn-logout').addEventListener('click', async () => {
     destroyChat();
     destroyPlayer();
+    if (isSharingScreen) {
+      await stopScreenSharing();
+    }
+    if (stopIncomingShareListener) {
+      stopIncomingShareListener();
+    }
     await logout();
     document.body.className = '';
     showScreen('login-screen');
@@ -360,10 +370,37 @@ function initVideoSources() {
       youtubeBar.classList.toggle('hidden', source !== 'youtube');
       uploadBar.classList.toggle('hidden', source !== 'upload');
       netflixPanel.classList.toggle('hidden', source !== 'netflix');
+      document.getElementById('screenshare-panel').classList.toggle('hidden', source !== 'screenshare');
 
       // Show/hide player container for netflix mode
       const playerContainer = document.getElementById('player-container');
       playerContainer.classList.toggle('hidden', source === 'netflix');
+
+      // Adjust main players visibility when toggling source
+      const placeholder = document.getElementById('player-placeholder');
+      const ytContainer = document.getElementById('youtube-player');
+      const localPlayer = document.getElementById('local-player');
+      const screensharePlayer = document.getElementById('screenshare-player');
+
+      if (source !== 'screenshare') {
+        screensharePlayer.classList.add('hidden');
+        if (source === 'youtube' && getYTPlayer()) {
+          ytContainer.classList.remove('hidden');
+          placeholder.classList.add('hidden');
+        } else if (source === 'upload' && localPlayer.src) {
+          localPlayer.classList.remove('hidden');
+          placeholder.classList.add('hidden');
+        } else {
+          placeholder.classList.remove('hidden');
+          ytContainer.classList.add('hidden');
+          localPlayer.classList.add('hidden');
+        }
+      } else {
+        screensharePlayer.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+        ytContainer.classList.add('hidden');
+        localPlayer.classList.add('hidden');
+      }
     });
   });
 
@@ -578,6 +615,128 @@ function playLocalVideo(url, startTime = 0, shouldPlay = true) {
       currentTime: localPlayer.currentTime
     });
   };
+}
+
+// ─── Screen Sharing UI Controllers ───
+let isSharingScreen = false;
+let stopIncomingShareListener = null;
+
+function initScreenShareUI() {
+  const shareBtn = document.getElementById('btn-toggle-share');
+  const shareStatus = document.getElementById('share-status-text');
+  const screensharePlayer = document.getElementById('screenshare-player');
+
+  shareBtn.addEventListener('click', async () => {
+    if (isSharingScreen) {
+      await stopScreenSharing();
+      handleLocalShareStopped();
+    } else {
+      shareBtn.disabled = true;
+      shareBtn.textContent = 'Connecting... 🖥️';
+      shareStatus.textContent = 'Requesting screen access...';
+
+      try {
+        await startScreenSharing(
+          (stream) => {
+            isSharingScreen = true;
+            screensharePlayer.srcObject = stream;
+            screensharePlayer.muted = true;
+            activateScreenshareView(true);
+            shareBtn.disabled = false;
+            shareBtn.textContent = 'Stop Screen Share 🛑';
+            shareBtn.classList.add('sharing');
+            shareStatus.textContent = 'Sharing screen in real-time...';
+          },
+          null,
+          (state) => {
+            console.log('WebRTC Connection state:', state);
+            if (state === 'connected') {
+              shareStatus.textContent = 'Connected with partner! 💚';
+            } else if (state === 'disconnected' || state === 'failed') {
+              shareStatus.textContent = 'Connection lost. Recalibrating...';
+            }
+          }
+        );
+      } catch (err) {
+        console.error('Screen sharing failed to start:', err);
+        handleLocalShareStopped();
+      }
+    }
+  });
+
+  function handleLocalShareStopped() {
+    isSharingScreen = false;
+    screensharePlayer.srcObject = null;
+    shareBtn.disabled = false;
+    shareBtn.textContent = 'Start Screen Share 🖥️';
+    shareBtn.classList.remove('sharing');
+    shareStatus.textContent = 'Ready to share';
+    resetToDefaultPlayerView();
+  }
+
+  stopIncomingShareListener = listenForIncomingShare(
+    (stream, senderName) => {
+      screensharePlayer.srcObject = stream;
+      screensharePlayer.muted = false;
+      activateScreenshareView(false, senderName);
+      shareStatus.textContent = `${senderName} is sharing their screen 🖥️`;
+      shareBtn.classList.add('hidden');
+    },
+    () => {
+      screensharePlayer.srcObject = null;
+      shareStatus.textContent = 'Ready to share';
+      shareBtn.classList.remove('hidden');
+      resetToDefaultPlayerView();
+    }
+  );
+}
+
+function activateScreenshareView(isLocalShare, partnerName) {
+  const placeholder = document.getElementById('player-placeholder');
+  const ytContainer = document.getElementById('youtube-player');
+  const localPlayer = document.getElementById('local-player');
+  const screensharePlayer = document.getElementById('screenshare-player');
+
+  placeholder.classList.add('hidden');
+  ytContainer.classList.add('hidden');
+  localPlayer.classList.add('hidden');
+  screensharePlayer.classList.remove('hidden');
+
+  const sourceBtns = document.querySelectorAll('.source-btn');
+  sourceBtns.forEach(b => b.classList.remove('active'));
+  document.getElementById('src-screenshare').classList.add('active');
+
+  document.getElementById('youtube-input-bar').classList.add('hidden');
+  document.getElementById('upload-input-bar').classList.add('hidden');
+  document.getElementById('netflix-panel').classList.add('hidden');
+  document.getElementById('screenshare-panel').classList.remove('hidden');
+
+  const nowWatching = document.getElementById('now-watching');
+  nowWatching.classList.remove('hidden');
+  document.getElementById('now-watching-text').textContent = 
+    isLocalShare ? 'You are sharing your screen 🖥️' : `${partnerName} is sharing screen 🖥️`;
+}
+
+function resetToDefaultPlayerView() {
+  const placeholder = document.getElementById('player-placeholder');
+  const ytContainer = document.getElementById('youtube-player');
+  const localPlayer = document.getElementById('local-player');
+  const screensharePlayer = document.getElementById('screenshare-player');
+
+  screensharePlayer.classList.add('hidden');
+  
+  const activeBtn = document.querySelector('.source-btn.active');
+  const source = activeBtn ? activeBtn.dataset.source : 'youtube';
+
+  placeholder.classList.toggle('hidden', source !== 'youtube' && source !== 'upload');
+  
+  document.getElementById('youtube-input-bar').classList.toggle('hidden', source !== 'youtube');
+  document.getElementById('upload-input-bar').classList.toggle('hidden', source !== 'upload');
+  document.getElementById('netflix-panel').classList.toggle('hidden', source !== 'netflix');
+  document.getElementById('screenshare-panel').classList.toggle('hidden', source !== 'screenshare');
+
+  const nowWatching = document.getElementById('now-watching');
+  nowWatching.classList.add('hidden');
 }
 
 // ─── Initialize App ───
