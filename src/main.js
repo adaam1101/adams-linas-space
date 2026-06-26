@@ -1,7 +1,7 @@
 // Main application — Adam & Lina's Space
 import './style.css';
 import { login, logout, getCurrentUser, watchPartnerPresence, getPartnerName } from './auth.js';
-import { initChat, sendMessage, setTyping, destroyChat, formatTime } from './chat.js';
+import { initChat, sendMessage, setTyping, destroyChat, formatTime, toggleReaction } from './chat.js';
 import {
   loadYouTubeAPI,
   extractYouTubeId,
@@ -176,6 +176,10 @@ function initChatUI() {
     if (!emojiPicker.contains(e.target) && e.target !== emojiBtn) {
       emojiPicker.classList.add('hidden');
     }
+    if (!e.target.closest('.reaction-picker-popover') && !e.target.closest('.react-trigger-btn')) {
+      document.querySelectorAll('.reaction-picker-popover').forEach(p => p.classList.add('hidden'));
+      document.querySelectorAll('.message').forEach(m => m.classList.remove('has-open-picker'));
+    }
   });
 
   // Typing indicator
@@ -227,13 +231,105 @@ function renderMessages(container, messages, user) {
     const div = document.createElement('div');
     div.className = `message ${isMine ? 'mine' : 'theirs'}`;
 
+    // Process reactions
+    const reactions = msg.reactions || {};
+    const emojiCounts = {};
+    Object.values(reactions).forEach(emoji => {
+      emojiCounts[emoji] = (emojiCounts[emoji] || 0) + 1;
+    });
+
+    let reactionsHtml = '';
+    const hasReactions = Object.keys(reactions).length > 0;
+    if (hasReactions) {
+      reactionsHtml = `<div class="message-reactions-pill">`;
+      Object.entries(emojiCounts).forEach(([emoji, count]) => {
+        const countStr = count > 1 ? `<span class="reaction-count">${count}</span>` : '';
+        const userReactedWithThis = reactions[user.key] === emoji;
+        
+        // Tooltip description
+        const reactors = [];
+        Object.entries(reactions).forEach(([uKey, uEmoji]) => {
+          if (uEmoji === emoji) {
+            reactors.push(uKey === user.key ? 'You' : getPartnerName());
+          }
+        });
+        const tooltip = `${reactors.join(' & ')} reacted with ${emoji}`;
+
+        reactionsHtml += `
+          <span class="reaction-emoji-badge ${userReactedWithThis ? 'active' : ''}" data-emoji="${emoji}" title="${tooltip}">
+            ${emoji}${countStr}
+          </span>
+        `;
+      });
+      reactionsHtml += `</div>`;
+    }
+
     div.innerHTML = `
-      <div class="message-bubble">${escapeHtml(msg.text)}</div>
+      <div class="message-content-container">
+        <div class="message-bubble">
+          ${escapeHtml(msg.text)}
+          ${reactionsHtml}
+        </div>
+        <button type="button" class="react-trigger-btn" title="Add reaction">➕</button>
+        <div class="reaction-picker-popover hidden">
+          <button type="button" class="picker-emoji-btn" data-emoji="❤️">❤️</button>
+          <button type="button" class="picker-emoji-btn" data-emoji="👍">👍</button>
+          <button type="button" class="picker-emoji-btn" data-emoji="😂">😂</button>
+          <button type="button" class="picker-emoji-btn" data-emoji="😮">😮</button>
+          <button type="button" class="picker-emoji-btn" data-emoji="😢">😢</button>
+          <button type="button" class="picker-emoji-btn" data-emoji="🙏">🙏</button>
+        </div>
+      </div>
       <div class="message-meta">
         <span class="message-sender">${msg.senderName}</span>
         <span class="message-time">${formatTime(msg.createdAt)}</span>
       </div>
     `;
+
+    // Attach listeners
+    const reactBtn = div.querySelector('.react-trigger-btn');
+    const popover = div.querySelector('.reaction-picker-popover');
+    
+    reactBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const allPopovers = document.querySelectorAll('.reaction-picker-popover');
+      allPopovers.forEach(p => {
+        if (p !== popover) p.classList.add('hidden');
+      });
+      popover.classList.toggle('hidden');
+      
+      document.querySelectorAll('.message').forEach(m => m.classList.remove('has-open-picker'));
+      if (!popover.classList.contains('hidden')) {
+        div.classList.add('has-open-picker');
+      }
+    });
+
+    div.querySelectorAll('.picker-emoji-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const emoji = btn.dataset.emoji;
+        popover.classList.add('hidden');
+        div.classList.remove('has-open-picker');
+        try {
+          await toggleReaction(msg.id, reactions, emoji);
+        } catch (err) {
+          console.error('Error toggling reaction:', err);
+        }
+      });
+    });
+
+    div.querySelectorAll('.reaction-emoji-badge').forEach(badge => {
+      badge.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const emoji = badge.dataset.emoji;
+        try {
+          await toggleReaction(msg.id, reactions, emoji);
+        } catch (err) {
+          console.error('Error toggling reaction badge:', err);
+        }
+      });
+    });
+
     container.appendChild(div);
   });
 

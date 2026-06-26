@@ -10,7 +10,8 @@ import {
   serverTimestamp,
   doc,
   setDoc,
-  deleteDoc
+  deleteDoc,
+  updateDoc
 } from 'firebase/firestore';
 import { getCurrentUser, getPartnerKey } from './auth.js';
 
@@ -58,6 +59,22 @@ export async function sendMessage(text) {
 
   // Clear typing indicator
   await setTyping(false);
+}
+
+export async function toggleReaction(messageId, currentReactions = {}, emoji) {
+  const user = getCurrentUser();
+  if (!user) return;
+
+  const newReactions = { ...currentReactions };
+  if (newReactions[user.key] === emoji) {
+    delete newReactions[user.key];
+  } else {
+    newReactions[user.key] = emoji;
+  }
+
+  await updateDoc(doc(db, 'messages', messageId), {
+    reactions: newReactions
+  });
 }
 
 export async function setTyping(isTyping) {

@@ -821,6 +821,166 @@ body {
   font-size: 0.95rem;
   line-height: 1.5;
   word-wrap: break-word;
+  position: relative;
+}
+
+/* Reactions Pill Badge */
+.message-reactions-pill {
+  position: absolute;
+  bottom: -10px;
+  display: flex;
+  gap: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-full);
+  padding: 3px 8px;
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-size: 0.8rem;
+  cursor: pointer;
+  user-select: none;
+  transition: var(--transition);
+  z-index: 2;
+  animation: scaleIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.message.mine .message-reactions-pill {
+  right: 12px;
+}
+
+.message.theirs .message-reactions-pill {
+  left: 12px;
+}
+
+.message-reactions-pill:hover {
+  background: var(--bg-glass-hover);
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.reaction-emoji-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 2px;
+  transition: transform 0.15s;
+}
+
+.reaction-emoji-badge:hover {
+  transform: scale(1.15);
+}
+
+.reaction-count {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--text-secondary);
+}
+
+.reaction-emoji-badge.active {
+  background: rgba(124, 106, 255, 0.15);
+  border-radius: 6px;
+  padding: 0 4px;
+}
+
+body.user-lina .reaction-emoji-badge.active {
+  background: rgba(255, 107, 157, 0.15);
+}
+
+/* Message Content Container & Alignment */
+.message-content-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.message.mine .message-content-container {
+  flex-direction: row-reverse;
+}
+
+/* React Button (Plus icon) */
+.react-trigger-btn {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s, background 0.2s;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.message:hover .react-trigger-btn {
+  opacity: 1;
+}
+
+.message.has-open-picker .react-trigger-btn {
+  opacity: 1;
+  background: var(--bg-glass-hover);
+  color: var(--text-primary);
+}
+
+.react-trigger-btn:hover {
+  transform: scale(1.15);
+  background: var(--bg-glass-hover);
+  color: var(--text-primary);
+}
+
+/* Reaction Picker Popover */
+.reaction-picker-popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) scale(1);
+  background: rgba(26, 26, 46, 0.95);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-full);
+  padding: 6px 12px;
+  display: flex;
+  gap: 8px;
+  box-shadow: var(--shadow-lg);
+  z-index: 10;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  animation: popoverIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popoverIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.8); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+.picker-emoji-btn {
+  background: none;
+  border: none;
+  font-size: 1.35rem;
+  cursor: pointer;
+  transition: transform 0.15s, filter 0.15s;
+  padding: 2px;
+  line-height: 1;
+}
+
+.picker-emoji-btn:hover {
+  transform: scale(1.3) translateY(-3px);
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+}
+
+.picker-emoji-btn:active {
+  transform: scale(0.9);
+}
+
+/* Touch Device Fallbacks */
+@media (hover: none) {
+  .react-trigger-btn {
+    opacity: 0.6;
+  }
 }
 
 .message.mine .message-bubble {

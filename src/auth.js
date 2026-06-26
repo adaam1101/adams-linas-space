@@ -15,13 +15,13 @@ import {
 // User mapping — simple fixed accounts
 const USERS = {
   adam: {
-    email: 'adam@adamlina.space',
+    email: 'adam.ameyoud@ensb.dz',
     displayName: 'Adam',
     emoji: '🧑‍💻',
     color: 'adam'
   },
   lina: {
-    email: 'lina@adamlina.space',
+    email: 'linalina@gmail.com',
     displayName: 'Lina',
     emoji: '👩‍🎨',
     color: 'lina'
@@ -67,14 +67,17 @@ export async function login(userKey, password) {
 
     return currentUser;
   } catch (err) {
-    console.error('Login error:', err);
-    if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+    console.error('Login error:', err.code, err.message);
+    if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential' || err.code === 'auth/invalid-password') {
       throw new Error('Wrong password! Try again ✨');
     }
     if (err.code === 'auth/user-not-found') {
-      throw new Error('Account not set up yet. Check Firebase Auth.');
+      throw new Error('Account not found. Create it in Firebase Auth Console.');
     }
-    throw new Error('Could not log in 😢 Check your connection.');
+    if (err.code === 'auth/too-many-requests') {
+      throw new Error('Too many attempts! Wait a minute and try again 🕐');
+    }
+    throw new Error(`Login error: ${err.code || err.message}`);
   }
 }
 
