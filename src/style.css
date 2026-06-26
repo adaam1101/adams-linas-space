@@ -100,7 +100,8 @@ body {
   display: none;
   position: relative;
   z-index: 1;
-  height: 100vh;
+  height: 100dvh;
+  height: 100%;
 }
 .screen.active {
   display: flex;
@@ -1228,8 +1229,6 @@ body.user-lina .chat-input-bar input:focus {
 @media (max-width: 900px) {
   .room-body {
     flex-direction: column;
-    height: calc(100vh - 60px);
-    overflow: hidden;
   }
 
   .video-section {
