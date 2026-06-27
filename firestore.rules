@@ -16,5 +16,20 @@ service cloud.firestore {
     match /typing/{userId} {
       allow read, write: if request.auth != null;
     }
+    match /doodleGame/{docId} {
+      allow read, write: if request.auth != null;
+    }
+    match /doodleStrokes/{docId} {
+      allow read, write: if request.auth != null;
+    }
+    match /interactions/{docId} {
+      allow read, write: if request.auth != null;
+    }
+    match /calls/{docId} {
+      allow read, write: if request.auth != null;
+    }
+    match /calls/{docId}/{subCol}/{subDocId} {
+      allow read, write: if request.auth != null;
+    }
   }
 }

@@ -1,6 +1,5 @@
 // Real-time chat module for Adam & Lina's Space
-import { db, storage } from './firebase.js';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db } from './firebase.js';
 import {
   collection,
   addDoc,
@@ -22,10 +21,10 @@ let typingUnsubscribe = null;
 let typingTimeout = null;
 
 export function initChat(onMessage, onTyping) {
-  // Listen for messages
+  // Listen for messages (query latest 200)
   const messagesQuery = query(
     collection(db, 'messages'),
-    orderBy('createdAt', 'asc'),
+    orderBy('createdAt', 'desc'),
     limit(MESSAGES_LIMIT)
   );
 
@@ -34,6 +33,8 @@ export function initChat(onMessage, onTyping) {
     snapshot.forEach((doc) => {
       messages.push({ id: doc.id, ...doc.data() });
     });
+    // Reverse array to render chronologically (oldest to newest)
+    messages.reverse();
     onMessage(messages);
   });
 
@@ -68,18 +69,12 @@ export async function sendMessage(text, replyTo = null) {
   await setTyping(false);
 }
 
-export async function sendVoiceMessage(audioBlob, replyTo = null) {
+export async function sendVoiceMessage(audioBase64Url, replyTo = null) {
   const user = getCurrentUser();
-  if (!user || !audioBlob) return;
-
-  const fileName = `voice/${user.key}_${Date.now()}.webm`;
-  const storageRef = ref(storage, fileName);
-
-  const snapshot = await uploadBytes(storageRef, audioBlob);
-  const downloadURL = await getDownloadURL(snapshot.ref);
+  if (!user || !audioBase64Url) return;
 
   const msgData = {
-    audioUrl: downloadURL,
+    audioUrl: audioBase64Url,
     sender: user.key,
     senderName: user.name,
     createdAt: serverTimestamp(),

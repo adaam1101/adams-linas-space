@@ -18,22 +18,39 @@ import {
 } from './player.js';
 import { createEmojiPicker } from './emoji.js';
 import { startScreenSharing, listenForIncomingShare, stopScreenSharing } from './screenShare.js';
+import { db } from './firebase.js';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import {
+  initCanvasDrawing,
+  drawStrokes,
+  syncIncomingStrokes,
+  pushStrokeToDb,
+  clearStrokesInDb
+} from './doodle.js';
+import {
+  initDoodleGame,
+  startNewGameRound,
+  submitDrawing,
+  submitGuess,
+  resetGameScores,
+  resetWholeGame
+} from './doodleGame.js';
 
 // ─── Particles Background ───
 function createParticles() {
   const container = document.getElementById('particles-bg');
-  const colors = ['rgba(124,106,255,0.3)', 'rgba(255,107,157,0.3)', 'rgba(251,191,36,0.2)'];
+  const colors = ['rgba(167,139,250,0.25)', 'rgba(244,114,182,0.2)', 'rgba(252,211,77,0.15)'];
 
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 20; i++) {
     const particle = document.createElement('div');
     particle.className = 'particle';
-    const size = Math.random() * 6 + 2;
+    const size = Math.random() * 2 + 1;
     particle.style.width = `${size}px`;
     particle.style.height = `${size}px`;
     particle.style.left = `${Math.random() * 100}%`;
     particle.style.background = colors[Math.floor(Math.random() * colors.length)];
-    particle.style.animationDuration = `${Math.random() * 15 + 10}s`;
-    particle.style.animationDelay = `${Math.random() * 10}s`;
+    particle.style.animationDuration = `${Math.random() * 20 + 15}s`;
+    particle.style.animationDelay = `${Math.random() * 15}s`;
     container.appendChild(particle);
   }
 }
@@ -144,6 +161,12 @@ function enterRoom() {
     console.log('YouTube API ready');
   });
 
+  // Initialize doodle game UI
+  const doodleCleanup = initDoodleGameUI();
+
+  // Initialize heart burst UI
+  const heartBurstCleanup = initHeartBurstUI();
+
   // Logout
   document.getElementById('btn-logout').addEventListener('click', async () => {
     destroyChat();
@@ -154,9 +177,25 @@ function enterRoom() {
     if (stopIncomingShareListener) {
       stopIncomingShareListener();
     }
+    if (doodleCleanup) {
+      doodleCleanup();
+    }
+    if (heartBurstCleanup) {
+      heartBurstCleanup();
+    }
     await logout();
     document.body.className = '';
     showScreen('login-screen');
+  });
+}
+
+// Helper to convert audio Blob to base64 Data URL
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
   });
 }
 
@@ -304,7 +343,8 @@ function initChatUI() {
             const replyPayload = activeReplyTo;
             activeReplyTo = null;
             replyPreviewBar.classList.add('hidden');
-            await sendVoiceMessage(audioBlob, replyPayload);
+            const base64Url = await blobToBase64(audioBlob);
+            await sendVoiceMessage(base64Url, replyPayload);
           } catch (err) {
             console.error('Failed to send voice message:', err);
             alert('Failed to send voice message 😢');
@@ -338,6 +378,11 @@ function initChatUI() {
       const minutes = Math.floor(elapsed / 60);
       const seconds = elapsed % 60;
       recordTimerEl.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+      
+      // Auto-stop at 45 seconds to keep document size under limits
+      if (elapsed >= 45 && mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+      }
     }, 1000);
   }
 
@@ -571,6 +616,9 @@ function initVideoSources() {
   const youtubeBar = document.getElementById('youtube-input-bar');
   const uploadBar = document.getElementById('upload-input-bar');
   const netflixPanel = document.getElementById('netflix-panel');
+  const screensharePanel = document.getElementById('screenshare-panel');
+  const doodlePanel = document.getElementById('doodle-panel');
+  const playerContainer = document.getElementById('player-container');
 
   sourceBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -582,11 +630,11 @@ function initVideoSources() {
       youtubeBar.classList.toggle('hidden', source !== 'youtube');
       uploadBar.classList.toggle('hidden', source !== 'upload');
       netflixPanel.classList.toggle('hidden', source !== 'netflix');
-      document.getElementById('screenshare-panel').classList.toggle('hidden', source !== 'screenshare');
+      screensharePanel.classList.toggle('hidden', source !== 'screenshare');
+      doodlePanel.classList.toggle('hidden', source !== 'doodle');
 
-      // Show/hide player container for netflix mode
-      const playerContainer = document.getElementById('player-container');
-      playerContainer.classList.toggle('hidden', source === 'netflix');
+      // Show/hide player container for netflix or doodle mode
+      playerContainer.classList.toggle('hidden', source === 'netflix' || source === 'doodle');
 
       // Adjust main players visibility when toggling source
       const placeholder = document.getElementById('player-placeholder');
@@ -1070,6 +1118,367 @@ function formatAudioTime(seconds) {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
+// ─── Doodle Game UI ───
+function initDoodleGameUI() {
+  const canvas = document.getElementById('doodle-canvas');
+  if (!canvas) return () => {};
+  const ctx = canvas.getContext('2d');
+
+  const placeholderOverlay = document.getElementById('canvas-placeholder-overlay');
+  const celebrationOverlay = document.getElementById('canvas-celebration-overlay');
+  const drawerToolbar = document.getElementById('doodle-drawer-toolbar');
+  const guesserToolbar = document.getElementById('doodle-guesser-toolbar');
+  const statusText = document.getElementById('doodle-status-text');
+  const scoreAdam = document.getElementById('score-adam');
+  const scoreLina = document.getElementById('score-lina');
+  const guessInput = document.getElementById('doodle-guess-input');
+  const submitGuessBtn = document.getElementById('btn-submit-guess');
+  const nextRoundBtn = document.getElementById('btn-next-round');
+  const resetScoresBtn = document.getElementById('btn-reset-scores');
+  const sendDrawingBtn = document.getElementById('btn-send-drawing');
+  const clearCanvasBtn = document.getElementById('btn-tool-clear');
+  const eraserBtn = document.getElementById('btn-tool-eraser');
+  const correctWordReveal = document.getElementById('correct-word-reveal');
+  const guessFeedback = document.getElementById('guess-feedback');
+
+  const user = getCurrentUser();
+  if (!user) return () => {};
+
+  let localGameState = null;
+  let brushSettings = { color: '#ffb3ba', width: 4, isEraser: false };
+  let drawingCleanup = null;
+  let strokesCleanup = null;
+  let currentStrokesList = [];
+  let canDraw = false;
+
+  // Clear guess feedback
+  if (guessFeedback) guessFeedback.textContent = '';
+
+  // Get active brush settings for canvas drawing
+  function getDrawingSettings() {
+    return { ...brushSettings, canDraw };
+  }
+
+  // Handle local drawing completion
+  async function onStrokeComplete(strokeData) {
+    if (!localGameState || localGameState.drawer !== user.key || localGameState.status !== 'drawing') {
+      return;
+    }
+    // Push completed stroke to DB
+    await pushStrokeToDb(strokeData, localGameState.version);
+  }
+
+  // Bind color pickers
+  const colorBtns = document.querySelectorAll('.color-btn');
+  colorBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      colorBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      brushSettings.color = btn.dataset.color;
+      brushSettings.isEraser = false;
+      if (eraserBtn) eraserBtn.classList.remove('active');
+    });
+  });
+
+  // Bind size buttons
+  const sizeBtns = document.querySelectorAll('.size-btn');
+  sizeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      sizeBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      brushSettings.width = parseInt(btn.dataset.size);
+    });
+  });
+
+  // Bind eraser toggle
+  if (eraserBtn) {
+    eraserBtn.addEventListener('click', () => {
+      brushSettings.isEraser = !brushSettings.isEraser;
+      eraserBtn.classList.toggle('active', brushSettings.isEraser);
+    });
+  }
+
+  // Bind clear canvas button
+  if (clearCanvasBtn) {
+    clearCanvasBtn.addEventListener('click', async () => {
+      if (!localGameState || localGameState.drawer !== user.key || localGameState.status !== 'drawing') {
+        return;
+      }
+      // Clear locally
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Clear in Firestore
+      await clearStrokesInDb(localGameState.version);
+    });
+  }
+
+  // Bind send drawing button
+  if (sendDrawingBtn) {
+    sendDrawingBtn.addEventListener('click', async () => {
+      if (!localGameState || localGameState.drawer !== user.key || localGameState.status !== 'drawing') {
+        return;
+      }
+      await submitDrawing();
+    });
+  }
+
+  // Bind guess submission
+  if (submitGuessBtn) {
+    submitGuessBtn.addEventListener('click', () => doSubmitGuess());
+  }
+  if (guessInput) {
+    guessInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        doSubmitGuess();
+      }
+    });
+  }
+
+  async function doSubmitGuess() {
+    if (!localGameState || localGameState.guesser !== user.key || localGameState.status !== 'guessing') {
+      return;
+    }
+    const guess = guessInput.value;
+    if (!guess.trim()) return;
+
+    guessInput.value = '';
+    const isCorrect = await submitGuess(guess, localGameState);
+    if (!isCorrect) {
+      if (guessFeedback) guessFeedback.textContent = 'Nope! Try again ✨';
+      setTimeout(() => {
+        if (guessFeedback) guessFeedback.textContent = '';
+      }, 3000);
+      
+      // Wobble input field for visual feedback
+      if (guessInput) {
+        guessInput.style.borderColor = '#ff4757';
+        guessInput.style.animation = 'none';
+        void guessInput.offsetWidth; // trigger reflow
+        guessInput.style.animation = 'peek 0.3s ease 2';
+        setTimeout(() => {
+          guessInput.style.borderColor = '';
+          guessInput.style.animation = '';
+        }, 1000);
+      }
+    }
+  }
+
+  // Bind next round button
+  if (nextRoundBtn) {
+    nextRoundBtn.addEventListener('click', async () => {
+      await startNewGameRound(localGameState);
+    });
+  }
+
+  // Bind reset scores button
+  if (resetScoresBtn) {
+    resetScoresBtn.addEventListener('click', async () => {
+      if (confirm('Are you sure you want to reset the game and scores? 🔄')) {
+        await resetWholeGame();
+      }
+    });
+  }
+
+  // Resize canvas display resolution dynamically on window resize or tab display
+  function resizeCanvasResolution() {
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    
+    if (canvas.width !== Math.floor(rect.width * dpr) || canvas.height !== Math.floor(rect.height * dpr)) {
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      
+      if (currentStrokesList) {
+        drawStrokes(canvas, currentStrokesList);
+      }
+    }
+  }
+  
+  // Watch resize
+  const resizeObserver = new ResizeObserver(() => {
+    resizeCanvasResolution();
+  });
+  resizeObserver.observe(canvas);
+
+  // Initialize Canvas events
+  drawingCleanup = initCanvasDrawing(canvas, getDrawingSettings, onStrokeComplete);
+
+  // Initialize Game State
+  const gameCleanup = initDoodleGame((state) => {
+    const stateChanged = !localGameState || localGameState.version !== state.version || localGameState.status !== state.status;
+    localGameState = state;
+
+    // Render scores
+    if (scoreAdam) scoreAdam.textContent = state.score?.adam || 0;
+    if (scoreLina) scoreLina.textContent = state.score?.lina || 0;
+
+    // Update canvas drawing permission
+    canDraw = (state.drawer === user.key && state.status === 'drawing');
+
+    // Clear guess feedback on any state change
+    if (guessFeedback) guessFeedback.textContent = '';
+
+    const isDrawer = state.drawer === user.key;
+    const partnerName = getPartnerName();
+
+    // Toggle toolbars
+    if (drawerToolbar) drawerToolbar.classList.toggle('hidden', !isDrawer || state.status !== 'drawing');
+    if (guesserToolbar) guesserToolbar.classList.toggle('hidden', isDrawer || state.status !== 'guessing');
+
+    // Toggle overlays
+    if (placeholderOverlay) {
+      placeholderOverlay.classList.toggle('hidden', isDrawer || state.status !== 'drawing');
+    }
+    const overlayText = document.getElementById('placeholder-overlay-text');
+    if (overlayText && !isDrawer && state.status === 'drawing') {
+      overlayText.textContent = `${partnerName} is drawing something beautiful... 🎨`;
+    }
+
+    if (celebrationOverlay) {
+      celebrationOverlay.classList.toggle('hidden', state.status !== 'correct' && state.status !== 'failed');
+      const celebrationTitle = celebrationOverlay.querySelector('h2');
+      if (celebrationTitle) {
+        if (state.status === 'correct') {
+          celebrationTitle.textContent = "Correct! 🎉";
+          celebrationTitle.style.color = "";
+        } else if (state.status === 'failed') {
+          celebrationTitle.textContent = "Out of Guesses! 😢";
+          celebrationTitle.style.color = "#ff4757";
+        }
+      }
+    }
+    if (correctWordReveal && (state.status === 'correct' || state.status === 'failed')) {
+      correctWordReveal.textContent = state.word.toUpperCase();
+    }
+
+    // Update status banner message
+    if (statusText) {
+      if (state.status === 'drawing') {
+        if (isDrawer) {
+          statusText.innerHTML = `Your Turn to Draw! Secret Word: <strong style="color: #fbbf24; font-size: 1.1rem; text-transform: uppercase;">${state.word}</strong> 🎨`;
+        } else {
+          statusText.textContent = `${partnerName} is drawing... 🖌️`;
+        }
+      } else if (state.status === 'guessing') {
+        if (isDrawer) {
+          const wrongCount = state.wrongGuesses || 0;
+          statusText.textContent = `Waiting for ${partnerName} to guess... 🤔 (${wrongCount}/2 wrong)`;
+        } else {
+          const remaining = 2 - (state.wrongGuesses || 0);
+          statusText.innerHTML = `Time to Guess! What did ${partnerName} draw? 🧐 <span style="color: #ffb3ba; font-size: 0.85rem;">(${remaining} ${remaining === 1 ? 'guess' : 'guesses'} left!)</span>`;
+        }
+      } else if (state.status === 'correct') {
+        statusText.textContent = `Correct guess! 🎉 Roles swapping next...`;
+      } else if (state.status === 'failed') {
+        statusText.textContent = `No guesses left! 😢 Roles swapping next...`;
+      }
+    }
+
+    // If version changed, or if it is the first load, subscribe to new version strokes
+    if (stateChanged) {
+      if (strokesCleanup) {
+        strokesCleanup();
+      }
+      
+      // Clear canvas locally first
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      currentStrokesList = [];
+      
+      strokesCleanup = syncIncomingStrokes(state.version, (strokes) => {
+        currentStrokesList = strokes;
+        drawStrokes(canvas, strokes);
+      });
+    }
+  });
+
+  return () => {
+    if (drawingCleanup) drawingCleanup();
+    if (strokesCleanup) strokesCleanup();
+    if (gameCleanup) gameCleanup();
+    resizeObserver.disconnect();
+  };
+}
+
+// ─── Heart Burst UI & Real-Time Sync ───
+function initHeartBurstUI() {
+  const heartBtn = document.getElementById('btn-heart-burst');
+  if (!heartBtn) return () => {};
+  const user = getCurrentUser();
+  if (!user) return () => {};
+
+  // Click handler
+  heartBtn.addEventListener('click', async () => {
+    // Throttle clicks locally to prevent spam
+    heartBtn.disabled = true;
+    heartBtn.style.opacity = '0.5';
+    setTimeout(() => {
+      heartBtn.disabled = false;
+      heartBtn.style.opacity = '';
+    }, 2000);
+
+    try {
+      await setDoc(doc(db, 'interactions', 'burst'), {
+        timestamp: Date.now(),
+        triggeredBy: user.key
+      }, { merge: true });
+    } catch (err) {
+      console.error('Error triggering heart burst:', err);
+    }
+  });
+
+  // Real-time listener
+  let lastBurstTime = null;
+  const unsubscribe = onSnapshot(doc(db, 'interactions', 'burst'), (snap) => {
+    const data = snap.data();
+    if (data && data.timestamp) {
+      if (lastBurstTime && data.timestamp !== lastBurstTime) {
+        triggerHeartBurstAnimation();
+      }
+      lastBurstTime = data.timestamp;
+    }
+  });
+
+  return unsubscribe;
+}
+
+// Float & fade floating hearts animation in DOM
+function triggerHeartBurstAnimation() {
+  const container = document.body;
+  const colors = ['💖', '💝', '💕', '💗', '💓', '❤️'];
+  
+  // Launch 25 floating hearts
+  for (let i = 0; i < 25; i++) {
+    setTimeout(() => {
+      const heart = document.createElement('div');
+      heart.className = 'floating-heart';
+      heart.textContent = colors[Math.floor(Math.random() * colors.length)];
+      
+      // Random horizontal starting position (0% to 100% of window width)
+      const startX = Math.random() * window.innerWidth;
+      // Random end position offset (-150px to +150px)
+      const endX = startX + (Math.random() * 300 - 150);
+      // Random rotation
+      const rot = Math.random() * 90 - 45;
+      
+      heart.style.left = `${startX}px`;
+      heart.style.setProperty('--start-x', '0px');
+      heart.style.setProperty('--end-x', `${endX - startX}px`);
+      heart.style.setProperty('--rot', `${rot}deg`);
+      
+      // Random animation duration
+      const duration = 2 + Math.random() * 1.5;
+      heart.style.animationDuration = `${duration}s`;
+      
+      container.appendChild(heart);
+      
+      // Remove after animation finishes
+      setTimeout(() => {
+        heart.remove();
+      }, duration * 1000);
+    }, i * 60); // stagger launch slightly for cascading waterfall effect
+  }
 }
 
 // ─── Initialize App ───

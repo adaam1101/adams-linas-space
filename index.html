@@ -2,13 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="description" content="Adam & Lina's Space — A cozy private place to watch movies together and chat in real time." />
+  <meta name="theme-color" content="#0c0c18" />
   <title>Adam & Lina's Space 🌙</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌙</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
 <body>
   <div id="particles-bg"></div>
@@ -67,6 +68,7 @@
           <span class="status-dot offline"></span>
           <span class="status-name" id="partner-name">—</span>
         </div>
+        <button class="btn-icon" id="btn-heart-burst" title="Send a Heart Burst">💖</button>
         <button class="btn-icon" id="btn-logout" title="Leave space">🚪</button>
       </div>
     </header>
@@ -79,6 +81,7 @@
           <button class="source-btn" data-source="upload" id="src-upload">📁 Upload</button>
           <button class="source-btn" data-source="netflix" id="src-netflix">🎬 Netflix Sync</button>
           <button class="source-btn" data-source="screenshare" id="src-screenshare">🖥️ Screen Share</button>
+          <button class="source-btn" data-source="doodle" id="src-doodle">🎨 Doodle Game</button>
         </div>
 
         <!-- YouTube Input -->
@@ -118,6 +121,76 @@
             <div class="screenshare-action-section">
               <button class="btn-share" id="btn-toggle-share">Start Screen Share 🖥️</button>
               <p class="share-status-text" id="share-status-text">Ready to share</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Doodle Game Panel -->
+        <div class="doodle-panel hidden" id="doodle-panel">
+          <div class="doodle-container glass-card">
+            <!-- Game Status / Scores header -->
+            <div class="doodle-header">
+              <div class="game-score">
+                <span class="score-badge adam-badge">🧑‍💻 Adam: <span id="score-adam">0</span></span>
+                <span class="score-badge lina-badge">👩‍🎨 Lina: <span id="score-lina">0</span></span>
+              </div>
+              <button class="btn-text-sm" id="btn-reset-scores" title="Reset Scores">🔄 Reset</button>
+            </div>
+
+            <!-- Role & status banner -->
+            <div class="doodle-status-banner" id="doodle-status-banner">
+              <span id="doodle-status-text">Loading game state... ⏳</span>
+            </div>
+
+            <!-- Canvas Container -->
+            <div class="doodle-canvas-wrapper" id="doodle-canvas-wrapper">
+              <canvas id="doodle-canvas" width="600" height="400"></canvas>
+              
+              <!-- Placeholder overlay for guesser when drawer is drawing -->
+              <div class="canvas-placeholder-overlay hidden" id="canvas-placeholder-overlay">
+                <div class="loader-hearts">💖🎨✨</div>
+                <p id="placeholder-overlay-text">Partner is drawing something beautiful... 🌙</p>
+              </div>
+
+              <!-- Round complete celebration overlay -->
+              <div class="canvas-celebration-overlay hidden" id="canvas-celebration-overlay">
+                <h2>Correct! 🎉</h2>
+                <p id="celebration-detail-text">The word was: <strong id="correct-word-reveal">—</strong></p>
+                <button class="btn-load btn-next-round" id="btn-next-round">Next Round 🔄</button>
+              </div>
+            </div>
+
+            <!-- Drawer Controls Toolbar -->
+            <div class="doodle-toolbar hidden" id="doodle-drawer-toolbar">
+              <div class="toolbar-group colors">
+                <!-- Pastel HSL color circles -->
+                <button class="color-btn active" data-color="#ffb3ba" style="background-color: #ffb3ba;"></button> <!-- Pastel Pink -->
+                <button class="color-btn" data-color="#ffdfba" style="background-color: #ffdfba;"></button> <!-- Pastel Orange -->
+                <button class="color-btn" data-color="#ffffba" style="background-color: #ffffba;"></button> <!-- Pastel Yellow -->
+                <button class="color-btn" data-color="#baffc9" style="background-color: #baffc9;"></button> <!-- Pastel Green -->
+                <button class="color-btn" data-color="#bae1ff" style="background-color: #bae1ff;"></button> <!-- Pastel Blue -->
+                <button class="color-btn" data-color="#e8c4ff" style="background-color: #e8c4ff;"></button> <!-- Pastel Purple -->
+                <button class="color-btn" data-color="#ffffff" style="background-color: #ffffff;"></button> <!-- White -->
+              </div>
+              <div class="toolbar-group sizes">
+                <button class="size-btn active" data-size="4"><span class="dot-indicator" style="width: 4px; height: 4px;"></span></button>
+                <button class="size-btn" data-size="8"><span class="dot-indicator" style="width: 8px; height: 8px;"></span></button>
+                <button class="size-btn" data-size="14"><span class="dot-indicator" style="width: 14px; height: 14px;"></span></button>
+              </div>
+              <div class="toolbar-group actions">
+                <button class="btn-tool" id="btn-tool-eraser" title="Eraser">🧽</button>
+                <button class="btn-tool" id="btn-tool-clear" title="Clear Canvas">🗑️</button>
+              </div>
+              <button class="btn-load btn-send-drawing" id="btn-send-drawing">Send Drawing 💌</button>
+            </div>
+
+            <!-- Guesser Controls Toolbar -->
+            <div class="doodle-toolbar hidden" id="doodle-guesser-toolbar">
+              <div class="guess-input-bar">
+                <input type="text" id="doodle-guess-input" placeholder="Type your guess here..." autocomplete="off" class="url-input" />
+                <button class="btn-load" id="btn-submit-guess">Guess 🚀</button>
+              </div>
+              <p class="guess-feedback-msg" id="guess-feedback"></p>
             </div>
           </div>
         </div>
