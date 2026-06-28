@@ -39,8 +39,17 @@ import {
 // ─── Particles Background ───
 function createParticles() {
   const container = document.getElementById('particles-bg');
-  const colors = ['rgba(167,139,250,0.25)', 'rgba(244,114,182,0.2)', 'rgba(252,211,77,0.15)'];
+  if (!container) return;
 
+  // Skip the ambient particles for users who prefer reduced motion —
+  // saves CPU/battery and respects the accessibility preference.
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+
+  // Twilight palette: indigo, rose, teal sparks.
+  const colors = ['rgba(139,140,249,0.28)', 'rgba(251,111,146,0.22)', 'rgba(45,212,191,0.18)'];
+
+  // Build all nodes off-DOM, then insert once to avoid layout thrash.
+  const fragment = document.createDocumentFragment();
   for (let i = 0; i < 20; i++) {
     const particle = document.createElement('div');
     particle.className = 'particle';
@@ -51,8 +60,9 @@ function createParticles() {
     particle.style.background = colors[Math.floor(Math.random() * colors.length)];
     particle.style.animationDuration = `${Math.random() * 20 + 15}s`;
     particle.style.animationDelay = `${Math.random() * 15}s`;
-    container.appendChild(particle);
+    fragment.appendChild(particle);
   }
+  container.appendChild(fragment);
 }
 
 // ─── Screen Management ───
