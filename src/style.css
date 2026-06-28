@@ -2283,3 +2283,208 @@ body.user-lina :focus-visible {
     display: none;
   }
 }
+
+/* ========================================
+   Creative Enhancements
+   Personality layer — decorative scene, shine
+   sweeps, live touches. Purely additive; no
+   markup/JS class names depend on these.
+   ======================================== */
+
+/* ---- Login: setting sun + twinkling stars scene ---- */
+.login-container { z-index: 1; }
+
+#login-screen::before {
+  content: '';
+  position: fixed;
+  bottom: -140px;
+  left: 50%;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.5), rgba(251, 146, 60, 0.22) 45%, transparent 70%);
+  filter: blur(6px);
+  z-index: 0;
+  pointer-events: none;
+  animation: sunBreathe 6s ease-in-out infinite;
+}
+
+@keyframes sunBreathe {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.9; }
+  50% { transform: translateX(-50%) scale(1.08); opacity: 1; }
+}
+
+#login-screen::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(2px 2px at 12% 22%, rgba(255, 240, 232, 0.9), transparent),
+    radial-gradient(2px 2px at 78% 16%, rgba(255, 224, 210, 0.8), transparent),
+    radial-gradient(1.5px 1.5px at 32% 12%, rgba(255, 240, 232, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 64% 28%, rgba(255, 224, 210, 0.7), transparent),
+    radial-gradient(2px 2px at 88% 40%, rgba(255, 240, 232, 0.6), transparent),
+    radial-gradient(1.5px 1.5px at 8% 46%, rgba(255, 224, 210, 0.6), transparent);
+  animation: twinkle 4.5s ease-in-out infinite alternate;
+}
+
+@keyframes twinkle {
+  0% { opacity: 0.35; }
+  100% { opacity: 0.9; }
+}
+
+/* Soft animated glow behind the wordmark */
+.logo-text {
+  filter: drop-shadow(0 0 18px rgba(251, 146, 60, 0.18));
+}
+
+/* Smooth swap for rotating taglines (driven by JS) */
+.login-subtitle {
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  min-height: 1.4em;
+}
+
+/* ---- Profile cards: 3D tilt + glossy light sweep ---- */
+.profile-cards { perspective: 1100px; }
+
+.profile-card {
+  transform-style: preserve-3d;
+}
+
+.profile-card:hover {
+  transform: translateY(-6px) rotateX(5deg) rotateY(-5deg) scale(1.03);
+}
+#login-lina.profile-card:hover {
+  transform: translateY(-6px) rotateX(5deg) rotateY(5deg) scale(1.03);
+}
+
+.profile-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 45%;
+  height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+  transform: skewX(-20deg);
+  pointer-events: none;
+  z-index: 2;
+  transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.profile-card:hover::after { left: 130%; }
+
+/* ---- Light-sweep shine on primary buttons ---- */
+.btn-enter,
+.btn-load,
+.btn-share,
+.btn-countdown,
+.btn-next-round,
+.btn-send-drawing {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-enter::after,
+.btn-load::after,
+.btn-share::after,
+.btn-countdown::after,
+.btn-next-round::after,
+.btn-send-drawing::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -80%;
+  width: 55%;
+  height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: skewX(-20deg);
+  pointer-events: none;
+  transition: left 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-enter:hover::after,
+.btn-load:hover::after,
+.btn-share:hover::after,
+.btn-countdown:hover::after,
+.btn-next-round:hover::after,
+.btn-send-drawing:hover::after { left: 135%; }
+
+/* ---- Livelier video placeholder ---- */
+.player-placeholder {
+  background: radial-gradient(circle at 50% 38%, rgba(251, 146, 60, 0.07), transparent 60%);
+}
+
+.placeholder-icon {
+  font-size: 4.5rem;
+  animation: floatSpin 4s ease-in-out infinite;
+  filter: drop-shadow(0 8px 22px rgba(251, 146, 60, 0.35));
+}
+
+@keyframes floatSpin {
+  0%, 100% { transform: translateY(0) rotate(-5deg); }
+  50% { transform: translateY(-12px) rotate(5deg); }
+}
+
+.player-placeholder p {
+  max-width: 340px;
+  font-size: 0.98rem;
+}
+
+/* ---- Chat welcome: bouncy emblem ---- */
+.chat-welcome span {
+  animation: floatSpin 3.2s ease-in-out infinite;
+  filter: drop-shadow(0 6px 16px rgba(251, 113, 133, 0.3));
+}
+
+/* ---- Live online-status heartbeat ring ---- */
+.status-dot:not(.offline) {
+  animation: dotPulse 2s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.5); }
+  50% { box-shadow: 0 0 0 7px rgba(74, 222, 128, 0); }
+}
+
+/* ---- Header live clock + greeting (injected by JS) ---- */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.header-clock {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  padding: 5px 11px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+.header-clock-emoji { font-size: 0.95rem; line-height: 1; }
+
+/* ---- Heart-burst button gentle glow ---- */
+#btn-heart-burst {
+  animation: heartGlow 2.6s ease-in-out infinite;
+}
+
+@keyframes heartGlow {
+  0%, 100% { filter: drop-shadow(0 0 0 transparent); }
+  50% { filter: drop-shadow(0 0 9px rgba(251, 113, 133, 0.65)); }
+}
+
+/* ---- Source toggle: subtle active lift ---- */
+.source-btn.active {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 500px) {
+  .header-clock { display: none; }
+}

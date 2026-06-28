@@ -65,6 +65,55 @@ function createParticles() {
   container.appendChild(fragment);
 }
 
+// ─── Rotating Login Taglines ───
+function initLoginTaglines() {
+  const el = document.querySelector('.login-subtitle');
+  if (!el) return () => {};
+  const lines = [
+    'your cozy movie corner 🍿',
+    'press play, together 💞',
+    'miles apart, same screen 🌙',
+    'snacks optional, you mandatory 🥰',
+    'where every night is movie night 🎬',
+  ];
+  let i = 0;
+  const tick = setInterval(() => {
+    i = (i + 1) % lines.length;
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(6px)';
+    setTimeout(() => {
+      el.textContent = lines[i];
+      el.style.opacity = '';
+      el.style.transform = '';
+    }, 350);
+  }, 3800);
+  return () => clearInterval(tick);
+}
+
+// ─── Header Live Clock + Greeting ───
+function initHeaderClock() {
+  const headerLeft = document.querySelector('.header-left');
+  if (!headerLeft || headerLeft.querySelector('.header-clock')) return () => {};
+  const clock = document.createElement('div');
+  clock.className = 'header-clock';
+  clock.innerHTML = `<span class="header-clock-emoji"></span><span class="header-clock-time"></span>`;
+  headerLeft.appendChild(clock);
+
+  const emojiEl = clock.querySelector('.header-clock-emoji');
+  const timeEl = clock.querySelector('.header-clock-time');
+
+  function render() {
+    const now = new Date();
+    const h = now.getHours();
+    const emoji = h < 6 ? '🌙' : h < 12 ? '🌅' : h < 18 ? '☀️' : h < 21 ? '🌇' : '🌙';
+    emojiEl.textContent = emoji;
+    timeEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  render();
+  const tick = setInterval(render, 15000);
+  return () => clearInterval(tick);
+}
+
 // ─── Screen Management ───
 function showScreen(screenId) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -177,6 +226,9 @@ function enterRoom() {
   // Initialize heart burst UI
   const heartBurstCleanup = initHeartBurstUI();
 
+  // Header live clock + greeting
+  const headerClockCleanup = initHeaderClock();
+
   // Logout
   document.getElementById('btn-logout').addEventListener('click', async () => {
     destroyChat();
@@ -192,6 +244,9 @@ function enterRoom() {
     }
     if (heartBurstCleanup) {
       heartBurstCleanup();
+    }
+    if (headerClockCleanup) {
+      headerClockCleanup();
     }
     await logout();
     document.body.className = '';
@@ -1495,4 +1550,5 @@ function triggerHeartBurstAnimation() {
 document.addEventListener('DOMContentLoaded', () => {
   createParticles();
   initLogin();
+  initLoginTaglines();
 });
