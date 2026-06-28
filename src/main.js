@@ -45,8 +45,8 @@ function createParticles() {
   // saves CPU/battery and respects the accessibility preference.
   if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
 
-  // Twilight palette: indigo, rose, teal sparks.
-  const colors = ['rgba(139,140,249,0.28)', 'rgba(251,111,146,0.22)', 'rgba(45,212,191,0.18)'];
+  // Sunset palette: amber, coral, plum sparks.
+  const colors = ['rgba(251,191,36,0.3)', 'rgba(251,113,133,0.24)', 'rgba(192,132,252,0.2)'];
 
   // Build all nodes off-DOM, then insert once to avoid layout thrash.
   const fragment = document.createDocumentFragment();

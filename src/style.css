@@ -1,39 +1,39 @@
 /* ========================================
-   Adam & Lina's Space — Twilight Aurora (Redesign)
-   A deeper, more cinematic glass theme with a
-   slow drifting aurora and refined accent system.
+   Adam & Lina's Space — Warm Sunset (Redesign)
+   A cozy dusk theme: deep plum night washed with
+   peach, coral, amber and a soft drifting sunset glow.
    ======================================== */
 
 /* ---------- CSS Variables ---------- */
 :root {
-  /* Cool midnight canvas with a faint indigo undertone */
-  --bg-deep: #06070f;
-  --bg-surface: rgba(20, 18, 38, 0.5);
-  --bg-card: rgba(30, 26, 52, 0.62);
-  --bg-glass: rgba(255, 255, 255, 0.045);
-  --bg-glass-hover: rgba(255, 255, 255, 0.09);
-  --border-glass: rgba(255, 255, 255, 0.08);
-  --border-subtle: rgba(255, 255, 255, 0.045);
+  /* Deep plum/aubergine dusk canvas with a warm undertone */
+  --bg-deep: #1a0e1b;
+  --bg-surface: rgba(48, 26, 44, 0.5);
+  --bg-card: rgba(60, 34, 52, 0.62);
+  --bg-glass: rgba(255, 240, 232, 0.05);
+  --bg-glass-hover: rgba(255, 240, 232, 0.1);
+  --border-glass: rgba(255, 224, 210, 0.1);
+  --border-subtle: rgba(255, 224, 210, 0.06);
 
-  /* Adam — luminous indigo */
-  --adam-color: #8b8cf9;
-  --adam-glow: rgba(139, 140, 249, 0.28);
-  --adam-gradient: linear-gradient(135deg, rgba(139, 140, 249, 0.22), rgba(99, 102, 241, 0.42));
-  /* Lina — warm rose */
-  --lina-color: #fb6f92;
-  --lina-glow: rgba(251, 111, 146, 0.28);
-  --lina-gradient: linear-gradient(135deg, rgba(251, 111, 146, 0.22), rgba(236, 72, 153, 0.42));
-  /* Shared brand sweep used on logos & primary buttons */
-  --brand-gradient: linear-gradient(120deg, #8b8cf9 0%, #c084fc 45%, #fb6f92 100%);
-  --brand-gradient-soft: linear-gradient(120deg, rgba(139, 140, 249, 0.9), rgba(251, 111, 146, 0.9));
+  /* Adam — warm amber/orange */
+  --adam-color: #fb923c;
+  --adam-glow: rgba(251, 146, 60, 0.3);
+  --adam-gradient: linear-gradient(135deg, rgba(251, 191, 36, 0.24), rgba(251, 146, 60, 0.46));
+  /* Lina — coral rose */
+  --lina-color: #fb7185;
+  --lina-glow: rgba(251, 113, 133, 0.3);
+  --lina-gradient: linear-gradient(135deg, rgba(251, 113, 133, 0.24), rgba(244, 63, 94, 0.46));
+  /* Shared sunset sweep used on logos & primary buttons: amber -> coral -> plum */
+  --brand-gradient: linear-gradient(120deg, #fbbf24 0%, #fb7185 52%, #c084fc 100%);
+  --brand-gradient-soft: linear-gradient(120deg, rgba(251, 191, 36, 0.9), rgba(251, 113, 133, 0.9));
 
-  --accent-teal: #2dd4bf;
+  --accent-teal: #f0ab7e;
   --accent-gold: #fcd34d;
-  --accent-warm: #f59e42;
+  --accent-warm: #fb923c;
 
-  --text-primary: #f2f1fb;
-  --text-secondary: #a4a3c2;
-  --text-muted: #65647f;
+  --text-primary: #fdeee4;
+  --text-secondary: #cba8a6;
+  --text-muted: #8c6d72;
 
   --radius-sm: 12px;
   --radius-md: 18px;
@@ -45,8 +45,8 @@
   --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.32);
   --shadow-md: 0 14px 44px rgba(0, 0, 0, 0.42);
   --shadow-lg: 0 24px 70px rgba(0, 0, 0, 0.55);
-  --shadow-glow-adam: 0 0 36px rgba(139, 140, 249, 0.2);
-  --shadow-glow-lina: 0 0 36px rgba(251, 111, 146, 0.2);
+  --shadow-glow-adam: 0 0 36px rgba(251, 146, 60, 0.22);
+  --shadow-glow-lina: 0 0 36px rgba(251, 113, 133, 0.22);
 
   --glass-blur: blur(26px) saturate(135%);
 
@@ -78,7 +78,8 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Twilight Aurora — slow drifting mesh glows.
+/* Warm Sunset — slow drifting dusk glow.
+   A warm horizon (amber/coral low, plum high) that gently drifts.
    Slightly oversized so the drift never reveals an edge. */
 body::after {
   content: '';
@@ -87,10 +88,11 @@ body::after {
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(ellipse at 18% 12%, rgba(45, 212, 191, 0.14), transparent 50%),
-    radial-gradient(ellipse at 82% 18%, rgba(251, 111, 146, 0.13), transparent 50%),
-    radial-gradient(ellipse at 20% 88%, rgba(192, 132, 252, 0.11), transparent 52%),
-    radial-gradient(ellipse at 88% 84%, rgba(139, 140, 249, 0.13), transparent 50%);
+    radial-gradient(ellipse at 50% 108%, rgba(251, 146, 60, 0.22), transparent 55%),
+    radial-gradient(ellipse at 16% 86%, rgba(251, 113, 133, 0.18), transparent 50%),
+    radial-gradient(ellipse at 84% 90%, rgba(251, 191, 36, 0.14), transparent 50%),
+    radial-gradient(ellipse at 20% 14%, rgba(192, 132, 252, 0.13), transparent 52%),
+    radial-gradient(ellipse at 86% 16%, rgba(168, 85, 247, 0.12), transparent 50%);
   animation: auroraDrift 26s ease-in-out infinite alternate;
   will-change: transform;
 }
@@ -201,14 +203,14 @@ button:active,
 }
 
 .logo-adam {
-  background: linear-gradient(135deg, #8b8cf9, #6366f1);
+  background: linear-gradient(135deg, #fbbf24, #fb923c);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .logo-slash { color: var(--text-muted); margin: 0 4px; font-weight: 300; }
 .logo-lina {
-  background: linear-gradient(135deg, #fb6f92, #ec4899);
+  background: linear-gradient(135deg, #fb7185, #f43f5e);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -309,12 +311,12 @@ button:active,
 }
 
 .adam-avatar {
-  background: linear-gradient(135deg, rgba(167, 139, 250, 0.2), rgba(167, 139, 250, 0.05));
-  border: 2px solid rgba(167, 139, 250, 0.3);
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.2), rgba(251, 146, 60, 0.05));
+  border: 2px solid rgba(251, 146, 60, 0.3);
 }
 .lina-avatar {
-  background: linear-gradient(135deg, rgba(244, 114, 182, 0.2), rgba(244, 114, 182, 0.05));
-  border: 2px solid rgba(244, 114, 182, 0.3);
+  background: linear-gradient(135deg, rgba(251, 113, 133, 0.2), rgba(251, 113, 133, 0.05));
+  border: 2px solid rgba(251, 113, 133, 0.3);
 }
 
 .profile-name {
@@ -438,12 +440,12 @@ button:active,
 
 .input-group input:focus {
   border-color: var(--adam-color);
-  box-shadow: 0 0 16px rgba(167, 139, 250, 0.15);
+  box-shadow: 0 0 16px rgba(251, 146, 60, 0.15);
 }
 
 .input-group input.lina-focus:focus {
   border-color: var(--lina-color);
-  box-shadow: 0 0 16px rgba(244, 114, 182, 0.15);
+  box-shadow: 0 0 16px rgba(251, 113, 133, 0.15);
 }
 
 .btn-enter {
@@ -462,7 +464,7 @@ button:active,
 
 .btn-enter:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(167, 139, 250, 0.35);
+  box-shadow: 0 6px 20px rgba(251, 146, 60, 0.35);
 }
 
 .btn-enter:active {
@@ -632,16 +634,16 @@ button:active,
 }
 
 .source-btn.active {
-  background: linear-gradient(135deg, rgba(167, 139, 250, 0.2), rgba(139, 92, 246, 0.35));
-  border-color: rgba(167, 139, 250, 0.5);
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.2), rgba(251, 191, 36, 0.35));
+  border-color: rgba(251, 146, 60, 0.5);
   color: #fff;
-  box-shadow: 0 0 16px rgba(167, 139, 250, 0.2);
+  box-shadow: 0 0 16px rgba(251, 146, 60, 0.2);
 }
 
 body.user-lina .source-btn.active {
-  background: linear-gradient(135deg, rgba(244, 114, 182, 0.2), rgba(236, 72, 153, 0.35));
-  border-color: rgba(244, 114, 182, 0.5);
-  box-shadow: 0 0 16px rgba(244, 114, 182, 0.2);
+  background: linear-gradient(135deg, rgba(251, 113, 133, 0.2), rgba(244, 63, 94, 0.35));
+  border-color: rgba(251, 113, 133, 0.5);
+  box-shadow: 0 0 16px rgba(251, 113, 133, 0.2);
 }
 
 /* URL Input */
@@ -666,12 +668,12 @@ body.user-lina .source-btn.active {
 
 .url-input:focus {
   border-color: var(--adam-color);
-  box-shadow: 0 0 16px rgba(167, 139, 250, 0.15);
+  box-shadow: 0 0 16px rgba(251, 146, 60, 0.15);
 }
 
 body.user-lina .url-input:focus {
   border-color: var(--lina-color);
-  box-shadow: 0 0 16px rgba(244, 114, 182, 0.15);
+  box-shadow: 0 0 16px rgba(251, 113, 133, 0.15);
 }
 
 .btn-load {
@@ -691,7 +693,7 @@ body.user-lina .url-input:focus {
 
 .btn-load:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(167, 139, 250, 0.35);
+  box-shadow: 0 6px 20px rgba(251, 146, 60, 0.35);
 }
 
 /* Upload */
@@ -716,12 +718,12 @@ body.user-lina .url-input:focus {
 .upload-label:hover {
   border-color: var(--adam-color);
   color: var(--text-primary);
-  background: rgba(167, 139, 250, 0.05);
+  background: rgba(251, 146, 60, 0.05);
 }
 
 body.user-lina .upload-label:hover {
   border-color: var(--lina-color);
-  background: rgba(244, 114, 182, 0.05);
+  background: rgba(251, 113, 133, 0.05);
 }
 
 .upload-label input[type="file"] {
@@ -1178,13 +1180,13 @@ body.user-lina .btn-share:hover {
 }
 
 .reaction-emoji-badge.active {
-  background: rgba(167, 139, 250, 0.15);
+  background: rgba(251, 146, 60, 0.15);
   border-radius: 6px;
   padding: 0 4px;
 }
 
 body.user-lina .reaction-emoji-badge.active {
-  background: rgba(244, 114, 182, 0.15);
+  background: rgba(251, 113, 133, 0.15);
 }
 
 /* Message Content Container & Alignment */
@@ -1282,8 +1284,8 @@ body.user-lina .reaction-emoji-badge.active {
 
 .message.mine .message-bubble {
   background: var(--adam-gradient);
-  border: 1px solid rgba(167, 139, 250, 0.3);
-  box-shadow: 0 4px 16px rgba(167, 139, 250, 0.12);
+  border: 1px solid rgba(251, 146, 60, 0.3);
+  box-shadow: 0 4px 16px rgba(251, 146, 60, 0.12);
   color: var(--text-primary);
   border-bottom-right-radius: 8px;
 }
@@ -1299,8 +1301,8 @@ body.user-lina .reaction-emoji-badge.active {
 /* Dynamic colors based on current user */
 body.user-lina .message.mine .message-bubble {
   background: var(--lina-gradient);
-  border: 1px solid rgba(244, 114, 182, 0.3);
-  box-shadow: 0 4px 16px rgba(244, 114, 182, 0.12);
+  border: 1px solid rgba(251, 113, 133, 0.3);
+  box-shadow: 0 4px 16px rgba(251, 113, 133, 0.12);
 }
 
 .message-meta {
@@ -1386,12 +1388,12 @@ body.user-lina .message.mine .message-bubble {
 .chat-input-bar input:focus {
   background: rgba(255, 255, 255, 0.08);
   border-color: var(--adam-color);
-  box-shadow: 0 0 16px rgba(167, 139, 250, 0.15);
+  box-shadow: 0 0 16px rgba(251, 146, 60, 0.15);
 }
 
 body.user-lina .chat-input-bar input:focus {
   border-color: var(--lina-color);
-  box-shadow: 0 0 16px rgba(244, 114, 182, 0.15);
+  box-shadow: 0 0 16px rgba(251, 113, 133, 0.15);
 }
 
 .btn-emoji {
@@ -1427,7 +1429,7 @@ body.user-lina .chat-input-bar input:focus {
 }
 .btn-send:hover {
   transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.35);
+  box-shadow: 0 4px 12px rgba(251, 146, 60, 0.35);
 }
 
 /* Emoji Picker */
@@ -1923,13 +1925,13 @@ body.user-lina .message.mine .voice-progress-fill {
 }
 
 .adam-badge {
-  color: #c3bef7;
-  border-color: rgba(167, 139, 250, 0.4);
+  color: #fcd9a8;
+  border-color: rgba(251, 146, 60, 0.45);
 }
 
 .lina-badge {
-  color: #ffb8d1;
-  border-color: rgba(244, 114, 182, 0.4);
+  color: #ffc2cd;
+  border-color: rgba(251, 113, 133, 0.45);
 }
 
 .doodle-status-banner {
@@ -2012,7 +2014,7 @@ body.user-lina .message.mine .voice-progress-fill {
   font-weight: 700;
   background: var(--brand-gradient) !important;
   color: white !important;
-  box-shadow: 0 4px 15px rgba(167, 139, 250, 0.3);
+  box-shadow: 0 4px 15px rgba(251, 146, 60, 0.3);
 }
 
 /* Toolbar Controls */
@@ -2073,12 +2075,12 @@ body.user-lina .message.mine .voice-progress-fill {
 
 .size-btn.active {
   border-color: var(--adam-color);
-  background: rgba(167, 139, 250, 0.1);
+  background: rgba(251, 146, 60, 0.1);
 }
 
 body.user-lina .size-btn.active {
   border-color: var(--lina-color);
-  background: rgba(244, 114, 182, 0.1);
+  background: rgba(251, 113, 133, 0.1);
 }
 
 .dot-indicator {
